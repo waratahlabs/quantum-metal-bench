@@ -1,0 +1,8 @@
+{
+  "gate_count": 476,
+  "execution_time_sec_min": 11.355085015296936,
+  "execution_time_sec_stddev": 0.15791147110025086,
+  "execution_time_sec_mean": 11.50252661705017,
+  "execution_time_sec_max": 11.755375981330872,
+  "n_reps": 5
+}

@@ -1,0 +1,36 @@
+{
+  "platform": "metal-m1pro",
+  "benchmark": {
+    "n_reps": 5,
+    "execution_time_sec_mean": 13.270746159553529,
+    "gate_count": 476,
+    "execution_time_sec_stddev": 0.4937606113575669,
+    "execution_time_sec_max": 13.983214020729065,
+    "execution_time_sec_min": 12.640974998474121
+  },
+  "power": {
+    "window_matched": false,
+    "n_blocks_total": 3726,
+    "n_blocks_used": 7452,
+    "gpu_power": {
+      "mean_mw": 749.373054213634,
+      "max_mw": 16244.0,
+      "min_mw": 0.0,
+      "n_samples": 7452
+    },
+    "cpu_power": {
+      "mean_mw": 13941.389694041867,
+      "max_mw": 22815.0,
+      "min_mw": 3543.0,
+      "n_samples": 3726
+    },
+    "combined_power": {
+      "mean_mw": 14726.812399355878,
+      "max_mw": 31668.0,
+      "min_mw": 4914.0,
+      "n_samples": 3726
+    },
+    "raw_log": "/Users/bill/code/waratahlabs/quantum-metal-bench/benchmarks-results/power-raw-20260905T210942Z.txt",
+    "caveat": "window_matched=false means header timestamps could not be parsed; stats fall back to every sample in the log (includes ~2s idle padding before/after the benchmark, not a precise load-only window)."
+  }
+}

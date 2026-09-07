@@ -1,0 +1,10 @@
+{
+  "status": "SUCCESS",
+  "execution_time_sec_mean": 9.3809467826,
+  "execution_time_sec_stddev": 0.3112724061159612,
+  "n_reps": 5,
+  "high_variance": false,
+  "fidelity": 0.999999999999964,
+  "fidelity_threshold_used": 0.0,
+  "accuracy_status": "SUCCESS"
+}

@@ -1,0 +1,19 @@
+# Real-hardware verification image for the CUDA/lightning.gpu adapter (ISA F8c,
+# marked [DEFERRED-VERIFY] until run against an actual NVIDIA GPU).
+FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-pip python3-venv curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
+
+WORKDIR /repo
+COPY pyproject.toml README.md ./
+COPY src/ src/
+COPY tests/ tests/
+
+RUN uv sync --extra dev --extra cuda
+
+CMD ["bash"]
