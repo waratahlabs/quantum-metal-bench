@@ -1,0 +1,39 @@
+{
+  "platform": "cuda",
+  "benchmark": {
+    "status": "SUCCESS",
+    "execution_time_sec_mean": 7.0214156046000005,
+    "execution_time_sec_stddev": 0.14995329210909905,
+    "n_reps": 5,
+    "high_variance": false,
+    "fidelity": 0.999999999999964,
+    "fidelity_threshold_used": 0.9994325637817383,
+    "accuracy_status": "SUCCESS"
+  },
+  "power": {
+    "n_samples_total": 429,
+    "n_samples_used": 425,
+    "window_matched": true,
+    "power_w": {
+      "mean": 29.413623529411765,
+      "max": 123.45,
+      "min": 4.77,
+      "n_samples": 425
+    },
+    "utilization_pct": {
+      "mean": 27.19764705882353,
+      "max": 100.0,
+      "min": 0.0,
+      "n_samples": 425
+    },
+    "clock_mhz": {
+      "mean": 684.2117647058824,
+      "max": 2767.0,
+      "min": 172.0,
+      "n_samples": 425
+    },
+    "implausible_clock_readings": 0,
+    "telemetry_suspect": false,
+    "raw_csv": "/home/bill/code/waratahlabs/quantum-metal-bench/benchmarks-results/power-raw-cuda-20260908T103726Z.csv"
+  }
+}
