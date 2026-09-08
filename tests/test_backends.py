@@ -70,3 +70,30 @@ def test_timeout_reports_unconfirmed_not_silent_success(_mock_run, _mock_avail):
     ground_truth = np.array([1.0, 0.0], dtype=np.complex128)
     result = run_metal_backend("qaoa", 2, 2, 5, 0, ground_truth)
     assert result.status == "TIMEOUT_UNCONFIRMED_OOM"
+
+
+@patch("quantum_metal_bench.backends.metal_available", return_value=(True, None))
+@patch("quantum_metal_bench.backends.subprocess.run")
+def test_large_n_skips_fidelity_and_never_touches_statevector_fields(mock_run, _mock_avail):
+    # Regression test for the real n=28 OOM: qe-bench signals
+    # statevector_omitted at large n instead of emitting the full arrays.
+    # The Python side must accept this without requiring (or touching)
+    # statevector_real/statevector_imag, and must work with ground_truth=None
+    # since the caller has no reason to compute one at this scale either.
+    payload = {
+        "n_reps": 5,
+        "execution_time_sec_mean": 9.38,
+        "execution_time_sec_stddev": 0.31,
+        "gate_count": 476,
+        "statevector_omitted": True,
+        "statevector_omit_reason": "n_qubits > 16: full statevector JSON dump is O(2**n) memory and OOMs at scale",
+    }
+    mock_run.return_value = _fake_completed_process(payload)
+
+    result = run_metal_backend("qaoa", 28, 4, 5, 0, None)
+    assert result.status == "SUCCESS"
+    assert result.accuracy_status == "SKIPPED_FIDELITY_LARGE_N"
+    assert result.fidelity is None
+    assert result.fidelity_threshold_used is None
+    assert result.execution_time_sec_mean == 9.38
+    assert result.n_reps == 5

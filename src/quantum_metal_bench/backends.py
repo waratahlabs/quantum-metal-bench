@@ -25,6 +25,15 @@ QE_BENCH_PATH = _REPO_ROOT / "metal" / ".build" / "release" / "qe-bench"
 
 METAL_SUPPORTED_CIRCUITS = {"qaoa"}  # clifford_t has no cross-language RNG parity yet
 
+# Cross-language fidelity parity (Metal vs Python ground truth) is already
+# established at small n (~1e-7 agreement, verified once). Re-proving it via
+# a full statevector comparison at every benchmark run is O(2**n) memory and
+# doesn't scale -- a real n=28 run reached ~18GB and got OOM-killed. Above
+# this threshold, both backends skip the fidelity check and report timing
+# only. Shared contract with Swift's `maxQubitsForFidelityCheck` in
+# metal/Sources/QuantumEdgeCLI/main.swift -- keep in sync.
+MAX_QUBITS_FOR_FIDELITY_CHECK = 16
+
 
 def metal_available() -> tuple[bool, str | None]:
     """Returns (available, reason_if_not). Never raises — callers must be
@@ -42,12 +51,17 @@ def run_metal_backend(
     depth: int,
     reps: int,
     seed: int,
-    ground_truth: np.ndarray,
+    ground_truth: np.ndarray | None,
 ) -> BackendResult:
     """Runs the given circuit on the Metal backend via qe-bench and compares
     its resulting statevector against `ground_truth` (the CPU float64 result
     for the SAME circuit params — caller's responsibility to pass the right
-    one, since a mismatched circuit would produce a meaningless fidelity)."""
+    one, since a mismatched circuit would produce a meaningless fidelity).
+
+    Above MAX_QUBITS_FOR_FIDELITY_CHECK, `ground_truth` is ignored (may be
+    None) — qe-bench itself skips emitting the statevector at this scale, so
+    there's nothing to compare. Returns SUCCESS with accuracy_status
+    SKIPPED_FIDELITY_LARGE_N and no fidelity fields, not a failure."""
     if circuit not in METAL_SUPPORTED_CIRCUITS:
         return BackendResult(
             status="SKIPPED_CIRCUIT_TYPE",
@@ -86,6 +100,21 @@ def run_metal_backend(
     except json.JSONDecodeError:
         return BackendResult(status="FAILED_OTHER", skip_reason="qe-bench produced non-JSON stdout")
 
+    n_reps = payload["n_reps"]
+    mean = payload["execution_time_sec_mean"]
+    stddev = payload["execution_time_sec_stddev"]
+    high_variance = (stddev / mean) > 0.10 if mean > 0 else False
+
+    if payload.get("statevector_omitted"):
+        return BackendResult(
+            status="SUCCESS",
+            execution_time_sec_mean=mean,
+            execution_time_sec_stddev=stddev,
+            n_reps=n_reps,
+            high_variance=high_variance,
+            accuracy_status="SKIPPED_FIDELITY_LARGE_N",
+        )
+
     real = np.array(payload["statevector_real"], dtype=np.float64)
     imag = np.array(payload["statevector_imag"], dtype=np.float64)
     metal_state = real + 1j * imag
@@ -94,11 +123,6 @@ def run_metal_backend(
     gate_count = payload.get("gate_count", 0)
     threshold = fidelity_threshold(n_qubits, gate_count)
     accuracy_status = classify_accuracy(fidelity, n_qubits, gate_count)
-
-    n_reps = payload["n_reps"]
-    mean = payload["execution_time_sec_mean"]
-    stddev = payload["execution_time_sec_stddev"]
-    high_variance = (stddev / mean) > 0.10 if mean > 0 else False
 
     return BackendResult(
         status="SUCCESS",
@@ -135,7 +159,7 @@ def run_cuda_backend(
     seed: int,
     circuit_fn,
     gate_count: int,
-    ground_truth: np.ndarray,
+    ground_truth: np.ndarray | None,
 ) -> BackendResult:
     """Runs `circuit_fn` on PennyLane's lightning.gpu device in-process.
 
@@ -144,8 +168,12 @@ def run_cuda_backend(
     Python exception rather than SIGKILL-ing the process the way an iOS/
     unified-memory OOM does, so a bare try/except covers the common case,
     but a driver-level OOM that takes the whole process down would currently
-    escape this adapter same as it would any other in-process backend. Not
-    yet run against real CUDA hardware — see ISA Changelog.
+    escape this adapter same as it would any other in-process backend.
+    Verified against real RTX 5070 Ti hardware on bare-metal Linux.
+
+    Above MAX_QUBITS_FOR_FIDELITY_CHECK, `ground_truth` is ignored (may be
+    None) and the fidelity comparison is skipped — see run_metal_backend's
+    docstring for why full-statevector comparison doesn't scale.
     """
     if circuit not in CUDA_SUPPORTED_CIRCUITS:
         return BackendResult(
@@ -173,6 +201,16 @@ def run_cuda_backend(
         # failure (OOM, driver mismatch, context init) must degrade to a
         # visible status, never propagate and kill the whole sweep.
         return BackendResult(status="FAILED_OTHER", skip_reason=str(exc)[:500])
+
+    if n_qubits > MAX_QUBITS_FOR_FIDELITY_CHECK or ground_truth is None:
+        return BackendResult(
+            status="SUCCESS",
+            execution_time_sec_mean=timing.execution_time_sec_mean,
+            execution_time_sec_stddev=timing.execution_time_sec_stddev,
+            n_reps=timing.n_reps,
+            high_variance=timing.high_variance,
+            accuracy_status="SKIPPED_FIDELITY_LARGE_N",
+        )
 
     cuda_state = np.asarray(holder["state"])
     fidelity = state_fidelity(cuda_state, ground_truth)

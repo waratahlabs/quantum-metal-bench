@@ -9,7 +9,7 @@ import numpy as np
 import pennylane as qml
 
 from . import METHODOLOGY_VERSION
-from .backends import run_cuda_backend, run_metal_backend
+from .backends import MAX_QUBITS_FOR_FIDELITY_CHECK, run_cuda_backend, run_metal_backend
 from .circuits import CIRCUIT_BUILDERS
 from .fidelity import classify_accuracy, fidelity_threshold, max_amplitude_error, state_fidelity
 from .metadata import capture_metadata
@@ -39,27 +39,40 @@ def single(circuit: str, qubits: int, depth: int, reps: int, backend: str, seed:
     builder = CIRCUIT_BUILDERS[circuit]
     circuit_fn, gate_count = builder(qubits, depth, seed)
 
-    dev = qml.device("lightning.qubit", wires=qubits)
-    qnode = qml.QNode(circuit_fn, dev)
+    # Above MAX_QUBITS_FOR_FIDELITY_CHECK, metal/cuda backends skip the
+    # fidelity comparison entirely (see backends.py) — so for those backends
+    # at that scale, computing a CPU ground-truth state here would be pure
+    # waste: real cost, real memory (a full lightning.qubit statevector),
+    # for a value nobody ever reads. Skip computing it in that case.
+    needs_ground_truth = backend == "cpu" or qubits <= MAX_QUBITS_FOR_FIDELITY_CHECK
 
-    holder: dict = {}
+    ground_truth = None
+    if needs_ground_truth:
+        dev = qml.device("lightning.qubit", wires=qubits)
+        qnode = qml.QNode(circuit_fn, dev)
 
-    def run_once():
-        holder["state"] = qnode()
+        holder: dict = {}
 
-    # When benchmarking a GPU backend, the CPU run only exists to produce a
-    # ground-truth state for fidelity comparison — its own timing is
-    # discarded, so there's no reason to pay for N reps of it (at n=28 a
-    # single CPU rep already costs minutes; 5x that for a number nobody
-    # reads would be pure waste).
-    cpu_reps = reps if backend == "cpu" else 1
-    timing = time_repeated(run_once, n_reps=cpu_reps, warmup=(backend == "cpu"))
-    ground_truth = holder["state"]
+        def run_once():
+            holder["state"] = qnode()
+
+        # When benchmarking a GPU backend, the CPU run only exists to produce a
+        # ground-truth state for fidelity comparison — its own timing is
+        # discarded, so there's no reason to pay for N reps of it.
+        cpu_reps = reps if backend == "cpu" else 1
+        timing = time_repeated(run_once, n_reps=cpu_reps, warmup=(backend == "cpu"))
+        ground_truth = holder["state"]
 
     if backend == "metal":
-        result = run_metal_backend(circuit, qubits, depth, reps, seed, np.asarray(ground_truth))
+        result = run_metal_backend(
+            circuit, qubits, depth, reps, seed,
+            np.asarray(ground_truth) if ground_truth is not None else None,
+        )
     elif backend == "cuda":
-        result = run_cuda_backend(circuit, qubits, depth, reps, seed, circuit_fn, gate_count, np.asarray(ground_truth))
+        result = run_cuda_backend(
+            circuit, qubits, depth, reps, seed, circuit_fn, gate_count,
+            np.asarray(ground_truth) if ground_truth is not None else None,
+        )
     else:
         fidelity = state_fidelity(ground_truth, ground_truth)  # CPU compared against itself
         threshold = fidelity_threshold(qubits, gate_count)

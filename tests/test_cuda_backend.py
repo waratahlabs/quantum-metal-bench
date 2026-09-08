@@ -63,3 +63,27 @@ def test_successful_run_computes_fidelity_against_ground_truth(_mock_avail):
     assert result.fidelity is not None
     assert result.fidelity > 0.999
     assert result.n_reps == 5
+
+
+@patch("quantum_metal_bench.backends.cuda_available", return_value=(True, None))
+def test_large_n_skips_fidelity_without_ground_truth(_mock_avail):
+    # Symmetric with the Metal regression test: above
+    # MAX_QUBITS_FOR_FIDELITY_CHECK, the caller has no reason to compute a
+    # CPU ground truth either, so this must work with ground_truth=None.
+    fake_state = np.zeros(2**20, dtype=np.complex128)
+    fake_qnode = MagicMock(return_value=fake_state)
+
+    with patch.dict("sys.modules", {"pennylane": MagicMock()}):
+        import pennylane as qml  # the mocked module
+
+        qml.device.return_value = MagicMock()
+        qml.QNode.return_value = fake_qnode
+
+        result = run_cuda_backend(
+            "qaoa", 20, 4, 5, 0, lambda: None, gate_count=200, ground_truth=None
+        )
+
+    assert result.status == "SUCCESS"
+    assert result.accuracy_status == "SKIPPED_FIDELITY_LARGE_N"
+    assert result.fidelity is None
+    assert result.fidelity_threshold_used is None
