@@ -1,0 +1,20 @@
+{
+  "platform": "ios-a18pro",
+  "device": {
+    "chip": "A18 Pro",
+    "product_type": "iPhone17,2",
+    "os": "iOS 27.0"
+  },
+  "benchmark": {
+    "circuit": "qaoa",
+    "qubits": 28,
+    "depth": 4,
+    "seed": 0,
+    "execution_time_sec_min": 42.528,
+    "execution_time_sec_mean": 46.281,
+    "execution_time_sec_max": 49.861,
+    "n_reps": 5
+  },
+  "power": null,
+  "caveat": "Power data not captured — Instruments' Energy Log crashed during trace post-processing (Apple's own NetworkConnectionStatsModeling transformer, confirmed unrelated to app code via crash report analysis) before the recording could be stopped cleanly. Timing is real, measured on-device via QMBench's own UI (Date() around each rep, same convention as the macOS CLI). Per this repo's own contribution guidelines, reporting the flagged/partial run rather than omitting it."
+}
