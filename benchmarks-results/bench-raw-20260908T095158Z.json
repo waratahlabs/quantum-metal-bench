@@ -1,0 +1,10 @@
+{
+  "execution_time_sec_min": 22.141530990600586,
+  "execution_time_sec_mean": 22.165319180488588,
+  "statevector_omitted": true,
+  "n_reps": 5,
+  "execution_time_sec_max": 22.176546931266785,
+  "statevector_omit_reason": "n_qubits > 16: full statevector JSON dump is O(2**n) memory and OOMs at scale",
+  "gate_count": 476,
+  "execution_time_sec_stddev": 0.014689027798451479
+}
