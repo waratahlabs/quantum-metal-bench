@@ -1,0 +1,54 @@
+name: QMBench
+options:
+  bundleIdPrefix: com.waratahlabs
+  deploymentTarget:
+    iOS: "16.0"
+packages:
+  QuantumEdge:
+    path: ../metal
+targets:
+  QMBench:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: QMBench
+    dependencies:
+      - package: QuantumEdge
+        product: QuantumEdgeKit
+    info:
+      path: Generated/Info.plist
+      properties:
+        UILaunchScreen: {}
+        CFBundleDisplayName: QM Bench
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.waratahlabs.qmbench
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "1"
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+  QMBenchUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: QMBenchUITests
+    dependencies:
+      - target: QMBench
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.waratahlabs.qmbenchuitests
+        SWIFT_VERSION: "5.9"
+        TEST_TARGET_NAME: QMBench
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  QMBench:
+    build:
+      targets:
+        QMBench: all
+        QMBenchUITests: [test]
+    test:
+      targets:
+        - QMBenchUITests

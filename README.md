@@ -22,6 +22,10 @@ cd metal && swift build -c release && swift test
 .build/release/qe-bench bench --circuit qaoa --qubits 8 --depth 4 --reps 5 --seed 0   # JSON, used by the Python adapter
 ```
 
+### ios/ (A-series chips — A18, A18 Pro, etc.)
+
+The macOS CLI can't reach real iPhone/iPad silicon. `ios/` wraps the same `QuantumEdgeKit` kernel in a minimal standalone app for exactly that — see `ios/README.md` for setup and the tethered-Instruments workflow needed to get real power data (iOS has no `powermetrics` equivalent for third-party apps).
+
 ### Running the full sweep (CPU + Metal)
 
 ```
