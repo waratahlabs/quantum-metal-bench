@@ -1,0 +1,38 @@
+{
+  "platform": "metal-m3",
+  "benchmark": {
+    "execution_time_sec_mean": 23.880084800720216,
+    "execution_time_sec_stddev": 0.5011702392471908,
+    "execution_time_sec_max": 24.651094913482666,
+    "gate_count": 476,
+    "statevector_omit_reason": "n_qubits > 16: full statevector JSON dump is O(2**n) memory and OOMs at scale",
+    "statevector_omitted": true,
+    "execution_time_sec_min": 23.392518043518066,
+    "n_reps": 5
+  },
+  "power": {
+    "window_matched": true,
+    "n_blocks_total": 669,
+    "n_blocks_used": 667,
+    "gpu_power": {
+      "mean_mw": 4398.584707646177,
+      "max_mw": 6504.0,
+      "min_mw": 9.0,
+      "n_samples": 667
+    },
+    "cpu_power": {
+      "mean_mw": 7358.664167916042,
+      "max_mw": 14752.0,
+      "min_mw": 359.0,
+      "n_samples": 667
+    },
+    "combined_power": {
+      "mean_mw": 11757.226386806597,
+      "max_mw": 19290.0,
+      "min_mw": 4947.0,
+      "n_samples": 667
+    },
+    "raw_log": "/Users/will.hargan/code_github/quantum-metal-bench/benchmarks-results/power-raw-20260908T043615Z.txt",
+    "caveat": "Stats computed only from samples whose timestamp fell within the benchmark's start/end epoch (+/-1s padding)."
+  }
+}

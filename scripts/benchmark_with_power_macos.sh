@@ -44,6 +44,10 @@ REPS="${3:-5}"
 SEED="${4:-0}"
 SAMPLE_INTERVAL_MS="${5:-200}"
 
+# Chip auto-detection — must not be hardcoded (an m1pro label shipped on an
+# M3 once). Override with PLATFORM="..." if detection is wrong.
+PLATFORM="metal-$(sysctl -n machdep.cpu.brand_string | sed -E 's/^Apple //; s/ /-/g' | tr '[:upper:]' '[:lower:]')"
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 QE_BENCH="$REPO_ROOT/metal/.build/release/qe-bench"
 RESULTS_DIR="$REPO_ROOT/benchmarks-results"
@@ -115,7 +119,7 @@ python3 "$REPO_ROOT/scripts/parse_powermetrics.py" \
   --bench-log "$BENCH_LOG" \
   --start-epoch "$BENCH_START_EPOCH" \
   --end-epoch "$BENCH_END_EPOCH" \
-  --platform "metal-m1pro" \
+  --platform "$PLATFORM" \
   --out "$COMBINED"
 
 echo "Combined result written to: $COMBINED"
